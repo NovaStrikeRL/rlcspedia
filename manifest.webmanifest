@@ -1,0 +1,37 @@
+{
+  "name": "RLCSpedia",
+  "short_name": "RLCSpedia",
+  "description": "Torneos, series y goles de la RLCS en vivo, con tus equipos favoritos primero.",
+  "lang": "es",
+  "start_url": "./#live",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf9ff",
+  "theme_color": "#1e5ac8",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/logo.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "En vivo", "url": "./#live", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Torneos", "url": "./#torneos", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Favoritos", "url": "./#favoritos", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ],
+  "widgets": [
+    {
+      "name": "Serie en vivo",
+      "short_name": "En vivo",
+      "description": "Marcador de la serie en vivo más relevante (prioriza favoritos).",
+      "tag": "live",
+      "ms_ac_template": "widgets/live-template.json",
+      "data": "widgets/live-data.json",
+      "type": "application/json",
+      "screenshots": [{ "src": "icons/icon-512.png", "sizes": "512x512", "label": "Widget de serie en vivo" }],
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }],
+      "auth": false,
+      "update": 900
+    }
+  ]
+}

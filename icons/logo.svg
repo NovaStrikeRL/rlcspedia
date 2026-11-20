@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RLCSpedia">
+  <rect width="512" height="512" rx="112" fill="#1e5ac8"/>
+  <path d="M0 330 L512 250 L512 512 L0 512Z" fill="#c26a00" opacity=".95"/>
+  <g fill="none" stroke="#fff" stroke-linecap="round">
+    <path d="M70 196h120M50 246h110M80 296h90" stroke-width="22" opacity=".55"/>
+  </g>
+  <circle cx="318" cy="246" r="112" fill="#fff"/>
+  <g fill="none" stroke="#1e5ac8" stroke-width="14" stroke-linejoin="round">
+    <path d="M318 196l42 30-16 50h-52l-16-50z"/>
+    <path d="M318 196v-62M360 226l56-18M344 276l34 48M292 276l-34 48M276 226l-56-18"/>
+  </g>
+</svg>
