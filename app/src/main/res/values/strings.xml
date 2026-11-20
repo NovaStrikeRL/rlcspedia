@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">RLCSpedia</string>
+    <string name="widget_name">Serie en vivo</string>
+    <string name="widget_description">Marcador de la serie en vivo más relevante, con tus favoritos primero</string>
+</resources>

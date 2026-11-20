@@ -1,0 +1,7 @@
+<resources>
+    <color name="brand_blue">#1E5AC8</color>
+    <color name="brand_orange">#C26A00</color>
+    <color name="team_blue">#1E5AC8</color>
+    <color name="team_orange">#B35A00</color>
+    <color name="splash_bg">#FAF9FF</color>
+</resources>

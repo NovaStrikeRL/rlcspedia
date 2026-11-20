@@ -1,0 +1,1 @@
+# Glance / Compose traen sus propias reglas de consumidor.

@@ -7,21 +7,34 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) · Versiona
 
 ### Pendiente
 - Proveedor de datos reales (Liquipedia LPDB vía backend propio).
-- Servidor Web Push para notificaciones con la app cerrada.
-- Widget nativo de Android (Jetpack Glance) y tile de Wear OS vía empaquetado TWA/Capacitor.
+- Notificaciones push con la app cerrada (Firebase Cloud Messaging desde el backend).
+- Live Updates de Android 16+ para la serie en curso.
+- Tile y app de Wear OS.
 - Logo definitivo y nombre final.
+
+## [0.2.0] - 2026-11-20
+
+### Cambiado
+- **RLCSpedia ahora es una app nativa de Android** (Kotlin + Jetpack Compose) en lugar de una PWA. El prototipo web queda en el historial de git (`v0.1.0`).
+- Diseño migrado a **Material 3 Expressive**: `MaterialExpressiveTheme` con esquema de movimiento expresivo, barra de navegación corta, grupos de botones conectados, indicador de carga con formas que se transforman y formas expresivas (`MaterialShapes`).
+
+### Añadido
+- **En vivo**: tarjetas de serie con marcador animado del juego actual, indicadores de juegos ganados (Bo3/Bo5/Bo7), reloj, tiempo extra, último gol y detalle gol por gol.
+- **Torneos**: torneos en curso y próximos con cuenta regresiva; detalle con sus series.
+- **Favoritos**: búsqueda por equipo, región o jugador; los favoritos se ordenan primero, se resaltan y cambian de forma de avatar.
+- **Notificaciones** con canales separados (Goles, Inicio de series, Resultados): inicio de serie, cada gol con jugador, equipo y marcador, fin de juego y fin de serie; opción "solo de mis favoritos"; botón de prueba.
+- **Reloj**: las notificaciones se reflejan en Wear OS y otros relojes conectados al teléfono.
+- **Widget de pantalla de inicio** (Jetpack Glance) con la serie más relevante, favoritos primero; usa los colores del sistema.
+- **Accesibilidad**: tema Sistema/Claro/Oscuro, contraste alto, color dinámico (Material You) opcional, tamaño de texto 85–150 % sobre el del sistema, fuente Atkinson Hyperlegible en todo, reducir movimiento, anuncios de goles para TalkBack, descripciones completas de marcadores y objetivos táctiles de 48 dp.
+- Ícono adaptativo con versión monocromática para íconos temáticos.
+- Fuentes incluidas: Chakra Petch (marcadores) y Atkinson Hyperlegible (texto), ambas con licencia OFL.
+- GitHub Actions: compila el APK en cada push y lo publica en Releases al crear un tag `v*`.
+
+### Eliminado
+- PWA (HTML/CSS/JS, Service Worker y widget de Windows).
 
 ## [0.1.0] - 2026-11-20
 
 ### Añadido
-- PWA instalable con Material Design 3: tokens de color claro/oscuro, tipografía, forma y elevación.
-- Navegación M3: barra inferior en móvil y riel lateral en pantallas ≥ 840 px.
-- **En vivo**: tarjetas de serie con marcador del juego actual, indicadores de juegos ganados (Bo3/Bo5/Bo7), reloj, tiempo extra, último gol y detalle gol por gol.
-- **Torneos**: lista de torneos en curso y próximos con cuenta regresiva; detalle por torneo con sus series.
-- **Favoritos**: búsqueda de equipos y marcado con estrella; las series de favoritos se ordenan primero y se resaltan.
-- **Notificaciones** (teléfono y reloj por espejo): inicio de serie, goles (jugador, equipo y marcador), fin de juego y fin de serie; opción "solo favoritos"; botón de prueba.
-- **Widget** "Serie en vivo" (Adaptive Card, PWA widgets) actualizado desde el Service Worker.
-- **Accesibilidad**: tema Sistema/Claro/Oscuro, contraste alto, tamaño de texto 85–150 %, fuente de alta legibilidad (Atkinson Hyperlegible), reducir movimiento, anuncios de goles para lector de pantalla, foco visible y enlace "Saltar al contenido".
-- Service Worker con caché offline y manejo de `push` listo para backend.
+- Prototipo PWA con Material Design 3: en vivo, torneos, favoritos, notificaciones web, widget de Windows 11 y ajustes de accesibilidad.
 - Proveedor de datos de demostración con equipos ficticios y simulador de partidos.
-- Logo provisional original (marcador de posición).
