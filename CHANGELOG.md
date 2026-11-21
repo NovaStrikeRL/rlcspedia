@@ -12,7 +12,17 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) · Versiona
 - Tile y app de Wear OS.
 - Logo definitivo y nombre final.
 
-## [0.4.0] - 2026-11-21
+## [0.4.1] - 2026-11-21
+
+### Corregido
+- La 0.4.0 se cerraba al abrir: R8 eliminaba los accesores de los íconos declarados como constantes.
+
+### Cambiado
+- La Release se publica solo si la prueba en el emulador pasa (antes se publicaba al compilar).
+
+## [0.4.0] - 2026-11-21 [RETIRADA]
+
+> No instalar: se cierra al abrir. Usa la 0.4.1.
 
 ### Cambiado
 - **Modo demostración por defecto** mientras llega la clave de Liquipedia; se cambia en Ajustes → Datos.

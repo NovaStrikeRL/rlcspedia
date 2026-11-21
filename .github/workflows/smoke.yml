@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: smoke-${{ github.ref }}
   cancel-in-progress: true
@@ -52,3 +55,18 @@ jobs:
         with:
           name: smoke-logs
           path: smoke/
+
+      # Solo se publica una versión si la app abrió y recorrió las pestañas sin cerrarse
+      - name: Publicar Release (si la versión es nueva)
+        if: success() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          if gh release view "v$v" > /dev/null 2>&1; then
+            echo "La Release v$v ya existe."
+            exit 0
+          fi
+          awk -v v="$v" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+          cp app/build/outputs/apk/release/app-release.apk "RLCSpedia-v$v.apk"
+          gh release create "v$v" "RLCSpedia-v$v.apk" --target "$GITHUB_SHA" --title "RLCSpedia v$v" --notes-file notes.md
