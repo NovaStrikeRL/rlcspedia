@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -82,7 +83,7 @@ fun TeamsScreen(settings: AppSettings, padding: PaddingValues, onToggle: (String
                     }
                 },
                 label = { Text("Buscar equipo, región o jugador") },
-                shape = MaterialShapes.Pill.toShape(),
+                shape = RoundedCornerShape(28.dp),
                 modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth().padding(bottom = 12.dp),
             )
         }

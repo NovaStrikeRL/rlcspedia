@@ -100,15 +100,10 @@ fun LiveScreen(series: List<Series>, settings: AppSettings, feed: FeedState, pad
             item { Attribution(feed) }
         }
 
-        // Barra de herramientas flotante (M3 Expressive) con botón de acción vibrante
+        // Barra de herramientas flotante (M3 Expressive)
         HorizontalFloatingToolbar(
             expanded = true,
-            floatingActionButton = {
-                FloatingToolbarDefaults.VibrantFloatingActionButton(onClick = { scope.launch { listState.animateScrollToItem(0) } }) {
-                    Icon(painterResource(Symbols.expand), "Ir al inicio", Modifier.rotate(180f))
-                }
-            },
-            colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+            colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = padding.calculateBottomPadding() + 16.dp),
         ) {
             IconToggleButton(
@@ -119,6 +114,9 @@ fun LiveScreen(series: List<Series>, settings: AppSettings, feed: FeedState, pad
             }
             if (feed != FeedState.Demo) IconButton(onClick = { scope.launch { LiveRepository.refresh() } }, shapes = IconButtonDefaults.shapes()) {
                 Icon(painterResource(Symbols.refresh), "Actualizar")
+            }
+            IconButton(onClick = { scope.launch { listState.animateScrollToItem(0) } }, shapes = IconButtonDefaults.shapes()) {
+                Icon(painterResource(Symbols.expand), "Ir al inicio", Modifier.rotate(180f))
             }
         }
     }

@@ -12,6 +12,14 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) · Versiona
 - Tile y app de Wear OS.
 - Logo definitivo y nombre final.
 
+## [0.4.2] - 2026-11-21
+
+### Corregido
+- Formas deformadas: las de `MaterialShapes` se estiraban a óvalos dentro de cajas no cuadradas. El chip "En vivo", el formato (Bo5/Bo7) y el buscador ahora son píldoras reales.
+- Juegos ganados: cápsulas nítidas que crecen y se colorean al ganarse, en lugar de gemas irregulares.
+- Chip "En vivo": punto que pulsa en lugar del indicador de carga, que se veía como una mancha.
+- Barra flotante: colores estándar y tres botones del mismo tamaño; ya no se superpone un botón grande al contenido.
+
 ## [0.4.1] - 2026-11-21
 
 ### Corregido

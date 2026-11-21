@@ -30,7 +30,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -158,7 +165,7 @@ private fun SeriesContent(s: Series, favorites: Set<String>, expanded: Boolean) 
                 style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
             )
-            Surface(shape = MaterialShapes.Pill.toShape(), color = MaterialTheme.colorScheme.secondaryContainer) {
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
                 Text(
                     "Bo${s.bestOf}", style = MaterialTheme.typography.labelMediumEmphasized,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -278,27 +285,31 @@ private fun SeriesContent(s: Series, favorites: Set<String>, expanded: Boolean) 
 @Composable
 private fun LiveChip() {
     val tc = LocalTeamColors.current
-    Surface(color = tc.live, contentColor = tc.onLive, shape = MaterialShapes.Pill.toShape()) {
-        Row(Modifier.padding(start = 2.dp, end = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Indicador de carga expresivo: la forma se transforma en ciclo (señal de "en vivo")
-            if (LocalReduceMotion.current) Box(Modifier.padding(6.dp).size(8.dp).clip(MaterialShapes.Circle.toShape()).background(tc.onLive))
-            else LoadingIndicator(Modifier.size(22.dp), color = tc.onLive)
+    val reduce = LocalReduceMotion.current
+    val pulse = if (reduce) 1f else {
+        val tr = rememberInfiniteTransition(label = "live")
+        tr.animateFloat(0.35f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "pulse").value
+    }
+    Surface(color = tc.live, contentColor = tc.onLive, shape = CircleShape) {
+        Row(Modifier.padding(start = 10.dp, end = 12.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(8.dp).graphicsLayer { alpha = pulse }.clip(CircleShape).background(tc.onLive))
+            Spacer(Modifier.width(6.dp))
             Text("En vivo", style = MaterialTheme.typography.labelMediumEmphasized)
         }
     }
 }
 
-/** Juegos ganados: cada uno es una forma que pasa de círculo a "Gem" al ganarse. */
+/** Juegos ganados: cápsulas que crecen y se colorean con el equipo al ganarse. */
 @Composable
 private fun Pips(total: Int, on: Int, color: Color) {
-    Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.clearAndSetSemantics { }) {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clearAndSetSemantics { }) {
         repeat(total) { i ->
             val filled = i < on
-            val shape = animatedMorphShape(MaterialShapes.Circle, MaterialShapes.Gem, toTarget = filled)
-            val size by animateDpAsState(if (filled) 15.dp else 10.dp, MaterialTheme.motionScheme.defaultSpatialSpec(), label = "pip")
-            Box(Modifier.size(16.dp), contentAlignment = Alignment.Center) {
-                Box(Modifier.size(size).clip(shape).background(if (filled) color else MaterialTheme.colorScheme.outlineVariant))
-            }
+            val w by animateDpAsState(if (filled) 16.dp else 8.dp, MaterialTheme.motionScheme.defaultSpatialSpec(), label = "pip")
+            Box(
+                Modifier.width(w).height(8.dp).clip(CircleShape)
+                    .background(if (filled) color else MaterialTheme.colorScheme.outlineVariant)
+            )
         }
     }
 }
@@ -341,7 +352,7 @@ private fun GamesDetail(s: Series) {
             if (g.goals.isEmpty() && g.clockKnown) Text("Sin goles todavía", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             g.goals.forEach { ev ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(10.dp).clip(MaterialShapes.Cookie4Sided.toShape()).background(if (ev.side == 0) tc.blue else tc.orange))
+                    Box(Modifier.size(8.dp).clip(CircleShape).background(if (ev.side == 0) tc.blue else tc.orange))
                     Spacer(Modifier.width(8.dp))
                     Text(formatClock(ev.clock), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(56.dp))
                     Text(
