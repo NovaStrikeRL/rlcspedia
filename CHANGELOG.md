@@ -12,6 +12,14 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) · Versiona
 - Tile y app de Wear OS.
 - Logo definitivo y nombre final.
 
+## [0.2.1] - 2026-11-20
+
+### Corregido
+- La app se cerraba al abrirla: R8 eliminaba el constructor de la base de datos de WorkManager (que usa el widget). Se agregaron reglas de conservación y WorkManager 2.10.1.
+
+### Añadido
+- Prueba automática en emulador (Android 15) que abre la app, recorre las pestañas y falla si hay un cierre inesperado.
+
 ## [0.2.0] - 2026-11-20
 
 ### Cambiado
