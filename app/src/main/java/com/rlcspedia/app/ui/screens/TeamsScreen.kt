@@ -35,6 +35,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rlcspedia.app.R
 import com.rlcspedia.app.data.AppSettings
 import com.rlcspedia.app.data.LiveRepository
@@ -44,7 +45,8 @@ fun TeamsScreen(settings: AppSettings, padding: PaddingValues, onToggle: (String
     var query by rememberSaveable { mutableStateOf("") }
     val favs = settings.favorites
     val q = query.trim().lowercase()
-    val list = LiveRepository.teams
+    val teams by LiveRepository.teams.collectAsStateWithLifecycle()
+    val list = teams
         .filter { q.isEmpty() || (it.name + it.tag + it.region + it.players.joinToString()).lowercase().contains(q) }
         .sortedWith(compareByDescending<com.rlcspedia.app.data.Team> { it.id in favs }.thenBy { it.name })
     // Formas expresivas para avatares: la forma distingue favoritos sin depender del color
@@ -74,12 +76,20 @@ fun TeamsScreen(settings: AppSettings, padding: PaddingValues, onToggle: (String
                 modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth().padding(bottom = 12.dp),
             )
         }
-        if (list.isEmpty()) item { Text("Ningún equipo coincide con la búsqueda.", modifier = Modifier.padding(24.dp)) }
+        if (list.isEmpty()) item {
+            Text(
+                if (teams.isEmpty()) "Los equipos aparecen cuando se publican las series de la RLCS." else "Ningún equipo coincide con la búsqueda.",
+                modifier = Modifier.padding(24.dp),
+            )
+        }
         items(list, key = { it.id }) { t ->
             val fav = t.id in favs
             ListItem(
                 headlineContent = { Text(t.name) },
-                supportingContent = { Text("${t.region} · ${t.players.joinToString()}") },
+                supportingContent = {
+                    val info = listOf(t.region, t.players.joinToString()).filter { it.isNotBlank() }.joinToString(" · ")
+                    if (info.isNotEmpty()) Text(info)
+                },
                 leadingContent = {
                     Surface(
                         shape = if (fav) favShape else shape,

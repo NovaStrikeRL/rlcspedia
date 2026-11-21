@@ -2,6 +2,8 @@
 
 package com.rlcspedia.app.ui.components
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.togetherWith
@@ -30,6 +32,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -45,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -59,6 +63,7 @@ import com.rlcspedia.app.R
 import com.rlcspedia.app.data.LiveRepository
 import com.rlcspedia.app.data.Series
 import com.rlcspedia.app.data.SeriesStatus
+import com.rlcspedia.app.data.GAME_LENGTH
 import com.rlcspedia.app.data.formatClock
 import com.rlcspedia.app.ui.theme.LocalReduceMotion
 import com.rlcspedia.app.ui.theme.LocalTeamColors
@@ -109,8 +114,7 @@ fun SeriesCard(s: Series, favorites: Set<String>, modifier: Modifier = Modifier)
 @Composable
 private fun SeriesContent(s: Series, favorites: Set<String>) {
     var expanded by rememberSaveable(s.id) { mutableStateOf(false) }
-    val team = LiveRepository.teamById
-    val t = LiveRepository.tournament(s.tournamentId)
+        val t = LiveRepository.tournament(s.tournamentId)
     val (wa, wb) = s.wins
     val g = s.currentGame
     val live = s.status == SeriesStatus.LIVE
@@ -150,7 +154,7 @@ private fun SeriesContent(s: Series, favorites: Set<String>) {
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
                     .semantics(mergeDescendants = true) {
-                        contentDescription = "${team.getValue(id).name}. $wins de ${s.needed} juegos ganados." +
+                        contentDescription = "${LiveRepository.team(id).name}. $wins de ${s.needed} juegos ganados." +
                             if (live) " Goles en este juego: $score." else ""
                     },
                 verticalAlignment = Alignment.CenterVertically,
@@ -162,7 +166,7 @@ private fun SeriesContent(s: Series, favorites: Set<String>) {
                     Spacer(Modifier.width(6.dp))
                 }
                 Text(
-                    team.getValue(id).name,
+                    LiveRepository.team(id).name,
                     style = MaterialTheme.typography.titleMedium.let { if (lost) it.copy(fontWeight = FontWeight.Normal) else it },
                     color = if (lost) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
@@ -180,22 +184,40 @@ private fun SeriesContent(s: Series, favorites: Set<String>) {
                 val last = s.games[gi].goals.last()
                 val suffix = if (gi != s.games.lastIndex || s.pauseTicks > 0) " en el juego ${gi + 1}" else ""
                 Text(
-                    "Último gol: ${last.player} (${team.getValue(s.teams[last.side]).tag}) · ${last.scoreA}–${last.scoreB}$suffix",
+                    "Último gol: ${last.player} (${LiveRepository.team(s.teams[last.side]).tag}) · ${last.scoreA}–${last.scoreB}$suffix",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp).semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
         }
 
+        // Reloj del juego como progreso ondulado (solo cuando la fuente lo publica)
+        if (live && g != null && g.clockKnown && !g.overtime) {
+            val progress = 1f - g.clock / GAME_LENGTH.toFloat()
+            LinearWavyProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
+                    .semantics { contentDescription = "Tiempo restante ${formatClock(g.clock)}" },
+            )
+        }
+
         // Pie
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             val status = when (s.status) {
-                SeriesStatus.LIVE -> if (s.pauseTicks > 0) "Serie $wa–$wb · siguiente juego"
-                    else "Juego ${s.games.size} · ${if (g?.overtime == true) "Tiempo extra " else ""}${formatClock(g?.clock ?: 0)} · Serie $wa–$wb"
-                SeriesStatus.DONE -> "Final · gana ${team.getValue(s.teams[s.seriesWinner]).name}"
+                SeriesStatus.LIVE -> when {
+                    s.pauseTicks > 0 -> "Serie $wa–$wb · siguiente juego"
+                    g == null -> "Juego ${s.games.size + 1} · Serie $wa–$wb"
+                    !g.clockKnown -> "Juego ${s.games.size}${if (g.overtime) " · Tiempo extra" else ""} · Serie $wa–$wb"
+                    else -> "Juego ${s.games.size} · ${if (g.overtime) "Tiempo extra " else ""}${formatClock(g.clock)} · Serie $wa–$wb"
+                }
+                SeriesStatus.DONE -> "Final · gana ${LiveRepository.team(s.teams[s.seriesWinner]).name}"
                 SeriesStatus.UPCOMING -> "${startTime(s.start)} · ${countdown(s.start)}"
             }
             Text(status, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            s.url?.let { url ->
+                val ctx = LocalContext.current
+                TextButton(onClick = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) { Text("Liquipedia") }
+            }
             if (s.games.isNotEmpty()) TextButton(onClick = { expanded = !expanded }) {
                 Text(if (expanded) "Ocultar juegos" else "Ver juegos")
                 Icon(painterResource(if (expanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more), null)
@@ -251,8 +273,7 @@ private fun ScoreText(score: String, color: Color) =
 @Composable
 private fun GamesDetail(s: Series) {
     val tc = LocalTeamColors.current
-    val team = LiveRepository.teamById
-    Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         s.games.forEachIndexed { i, g ->
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Row(Modifier.fillMaxWidth()) {
@@ -262,14 +283,14 @@ private fun GamesDetail(s: Series) {
                 )
                 Text("${g.scoreA} – ${g.scoreB}", style = MaterialTheme.typography.labelLarge)
             }
-            if (g.goals.isEmpty()) Text("Sin goles todavía", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (g.goals.isEmpty() && g.clockKnown) Text("Sin goles todavía", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             g.goals.forEach { ev ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(8.dp).clip(RoundedCornerShape(4.dp)).background(if (ev.side == 0) tc.blue else tc.orange))
                     Spacer(Modifier.width(8.dp))
                     Text(formatClock(ev.clock), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(56.dp))
                     Text(
-                        "${ev.player} · ${team.getValue(s.teams[ev.side]).tag} · ${ev.scoreA}–${ev.scoreB}",
+                        "${ev.player} · ${LiveRepository.team(s.teams[ev.side]).tag} · ${ev.scoreA}–${ev.scoreB}",
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }

@@ -18,6 +18,7 @@ data class NotifyPrefs(
 )
 
 data class AppSettings(
+    val dataSource: DataSource = DataSource.LIQUIPEDIA,
     val favorites: Set<String> = emptySet(),
     val theme: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = false,
@@ -48,6 +49,7 @@ class SettingsStore(context: Context) {
     fun isFavorite(id: String) = id in _state.value.favorites
 
     private fun load() = AppSettings(
+        dataSource = runCatching { DataSource.valueOf(prefs.getString("dataSource", "LIQUIPEDIA")!!) }.getOrDefault(DataSource.LIQUIPEDIA),
         favorites = prefs.getStringSet("favorites", emptySet())!!.toSet(),
         theme = runCatching { ThemeMode.valueOf(prefs.getString("theme", "SYSTEM")!!) }.getOrDefault(ThemeMode.SYSTEM),
         dynamicColor = prefs.getBoolean("dynamicColor", false),
@@ -65,6 +67,7 @@ class SettingsStore(context: Context) {
     )
 
     private fun save(s: AppSettings) = prefs.edit {
+        putString("dataSource", s.dataSource.name)
         putStringSet("favorites", s.favorites)
         putString("theme", s.theme.name)
         putBoolean("dynamicColor", s.dynamicColor)

@@ -140,9 +140,13 @@ object WidgetUpdater {
         val live = pick.status == SeriesStatus.LIVE
         return WidgetSnapshot(
             tournament = t?.let { "${it.name} ${it.region}" } ?: "",
-            status = if (live) "Juego ${pick.games.size} · ${formatClock(g?.clock ?: 0)}" else countdown(pick.start),
-            teamA = LiveRepository.teamById.getValue(pick.teamA).name,
-            teamB = LiveRepository.teamById.getValue(pick.teamB).name,
+            status = when {
+                !live -> countdown(pick.start)
+                g?.clockKnown == true -> "Juego ${pick.games.size} · ${formatClock(g.clock)}"
+                else -> "En vivo · Juego ${if (g != null) pick.games.size else pick.games.size + 1}"
+            },
+            teamA = LiveRepository.team(pick.teamA).name,
+            teamB = LiveRepository.team(pick.teamB).name,
             scoreA = if (live) "${g?.scoreA ?: 0}" else "",
             scoreB = if (live) "${g?.scoreB ?: 0}" else "",
             series = "Serie $wa–$wb · Bo${pick.bestOf}",

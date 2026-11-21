@@ -19,6 +19,7 @@ data class Tournament(
     val teams: Int,
     val venue: String,
     val stage: String,
+    val url: String? = null,
 )
 
 /** side = 0 (equipo azul / A) o 1 (equipo naranja / B). clock en segundos; negativo = tiempo extra. */
@@ -31,6 +32,8 @@ data class Game(
     val overtime: Boolean = false,
     val clock: Int = GAME_LENGTH,
     val done: Boolean = false,
+    /** false con datos reales: Liquipedia no publica el reloj del juego. */
+    val clockKnown: Boolean = true,
 ) {
     val winner: Int get() = if (scoreA > scoreB) 0 else 1
 }
@@ -48,11 +51,14 @@ data class Series(
     val status: SeriesStatus,
     val games: List<Game>,
     val pauseTicks: Int = 0,
+    val url: String? = null,
+    /** Marcador de la serie publicado por la fuente (si existe, manda sobre el calculado). */
+    val seriesScore: Pair<Int, Int>? = null,
 ) {
     val needed: Int get() = (bestOf + 1) / 2
     val teams: List<String> get() = listOf(teamA, teamB)
     val wins: Pair<Int, Int>
-        get() = games.filter { it.done }.fold(0 to 0) { (a, b), g -> if (g.winner == 0) (a + 1) to b else a to (b + 1) }
+        get() = seriesScore ?: games.filter { it.done }.fold(0 to 0) { (a, b), g -> if (g.winner == 0) (a + 1) to b else a to (b + 1) }
     val currentGame: Game? get() = games.lastOrNull { !it.done }
     val seriesWinner: Int get() = if (wins.first > wins.second) 0 else 1
 }
@@ -63,6 +69,17 @@ sealed interface LiveEvent {
     data class GoalScored(override val series: Series, val goal: Goal, val gameNumber: Int, val overtime: Boolean) : LiveEvent
     data class GameEnded(override val series: Series, val game: Game, val gameNumber: Int) : LiveEvent
     data class SeriesEnded(override val series: Series) : LiveEvent
+    /** Cambio de marcador sin autor (datos reales: la fuente no indica quién anotó). */
+    data class ScoreUpdate(override val series: Series, val side: Int, val gameNumber: Int, val scoreA: Int, val scoreB: Int) : LiveEvent
+}
+
+enum class DataSource { LIQUIPEDIA, DEMO }
+
+sealed interface FeedState {
+    data object Demo : FeedState
+    data object Loading : FeedState
+    data class Ok(val generatedAt: Long, val attribution: String) : FeedState
+    data class Error(val message: String, val lastOk: Long?) : FeedState
 }
 
 const val GAME_LENGTH = 300

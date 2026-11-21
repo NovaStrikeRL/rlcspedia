@@ -25,7 +25,7 @@ import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +41,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rlcspedia.app.data.FeedState
 import com.rlcspedia.app.data.LiveEvent
 import com.rlcspedia.app.data.LiveRepository
 import com.rlcspedia.app.data.SeriesStatus
@@ -78,7 +79,8 @@ private fun App() {
     var tab by rememberSaveable { mutableStateOf(Tab.LIVE) }
     var openTournament by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
-    val scroll = TopAppBarDefaults.pinnedScrollBehavior()
+    val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val feed by LiveRepository.feedState.collectAsStateWithLifecycle()
     val liveCount = series.count { it.status == SeriesStatus.LIVE }
 
     BackHandler(enabled = openTournament != null) { openTournament = null }
@@ -87,11 +89,12 @@ private fun App() {
     LaunchedEffect(Unit) {
         LiveRepository.events.collect { e ->
             val s = e.series
-            val t = { id: String -> LiveRepository.teamById.getValue(id) }
+            val t = { id: String -> LiveRepository.team(id) }
             val fav = s.teams.any(store::isFavorite)
             when (e) {
                 is LiveEvent.SeriesStarted -> snackbar.showSnackbar("Empieza ${t(s.teamA).name} vs ${t(s.teamB).name} · Bo${s.bestOf}")
                 is LiveEvent.GoalScored -> if (fav) snackbar.showSnackbar("Gol de ${e.goal.player} (${t(s.teams[e.goal.side]).tag}) · ${e.goal.scoreA}–${e.goal.scoreB}")
+                is LiveEvent.ScoreUpdate -> if (fav) snackbar.showSnackbar("Gol de ${t(s.teams[e.side]).name} · ${e.scoreA}–${e.scoreB}")
                 is LiveEvent.SeriesEnded -> snackbar.showSnackbar("${t(s.teams[s.seriesWinner]).name} gana la serie ${s.wins.first}–${s.wins.second}")
                 else -> Unit
             }
@@ -101,7 +104,7 @@ private fun App() {
     Scaffold(
         modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
         topBar = {
-            TopAppBar(
+            MediumFlexibleTopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
@@ -109,9 +112,10 @@ private fun App() {
                             modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)),
                         )
                         Spacer(Modifier.width(12.dp))
-                        Text("RLCSpedia", style = MaterialTheme.typography.headlineSmall)
+                        Text("RLCSpedia")
                     }
                 },
+                subtitle = { Text(feedSubtitle(feed)) },
                 scrollBehavior = scroll,
             )
         },
@@ -134,7 +138,7 @@ private fun App() {
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         when (tab) {
-            Tab.LIVE -> LiveScreen(series, settings, padding)
+            Tab.LIVE -> LiveScreen(series, settings, feed, padding)
             Tab.TOURNAMENTS -> openTournament?.let { id ->
                 TournamentScreen(id, series, settings, padding, onBack = { openTournament = null })
             } ?: TournamentsScreen(padding, onOpen = { openTournament = it })
@@ -142,4 +146,20 @@ private fun App() {
             Tab.SETTINGS -> SettingsScreen(settings, padding, onChange = store::update)
         }
     }
+}
+
+fun minutesAgo(t: Long): String {
+    val m = ((System.currentTimeMillis() - t) / 60_000).coerceAtLeast(0)
+    return when {
+        m < 1 -> "hace un momento"
+        m < 60 -> "hace $m min"
+        else -> "hace ${m / 60} h"
+    }
+}
+
+fun feedSubtitle(f: FeedState): String = when (f) {
+    FeedState.Demo -> "Modo demostración"
+    FeedState.Loading -> "Cargando datos de Liquipedia…"
+    is FeedState.Ok -> "Liquipedia · actualizado ${minutesAgo(f.generatedAt)}"
+    is FeedState.Error -> "Sin conexión con los datos" + (f.lastOk?.let { " · último ${minutesAgo(it)}" } ?: "")
 }

@@ -55,6 +55,7 @@ import com.rlcspedia.app.R
 import com.rlcspedia.app.RLCSpediaApp
 import com.rlcspedia.app.data.AppSettings
 import com.rlcspedia.app.data.ContrastLevel
+import com.rlcspedia.app.data.DataSource
 import com.rlcspedia.app.data.NotifyPrefs
 import com.rlcspedia.app.data.ThemeMode
 import com.rlcspedia.app.notify.Notifier
@@ -76,6 +77,20 @@ fun SettingsScreen(settings: AppSettings, padding: PaddingValues, onChange: ((Ap
     ) {
         Column(Modifier.widthIn(max = 720.dp).fillMaxWidth()) {
             SectionTitle("Ajustes")
+
+            Group("Datos") {
+                Labeled("Fuente") {
+                    Connected(listOf(DataSource.LIQUIPEDIA to "Liquipedia", DataSource.DEMO to "Demostración"), settings.dataSource) { v ->
+                        onChange { it.copy(dataSource = v) }
+                    }
+                    Text(
+                        if (settings.dataSource == DataSource.LIQUIPEDIA)
+                            "Torneos, series y marcadores reales de la RLCS (CC-BY-SA 3.0). Liquipedia no publica quién anota ni el reloj del juego; los avisos de gol indican el equipo."
+                        else "Equipos ficticios y partidos simulados, con goleador y reloj, para probar la app.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
 
             Group("Apariencia y accesibilidad") {
                 Labeled("Tema") {
@@ -130,7 +145,7 @@ fun SettingsScreen(settings: AppSettings, padding: PaddingValues, onChange: ((Ap
                 val n = settings.notify
                 fun set(f: (NotifyPrefs) -> NotifyPrefs) = onChange { it.copy(notify = f(it.notify)) }
                 SwitchRow("Inicio de serie", null, n.seriesStart) { v -> set { it.copy(seriesStart = v) } }
-                SwitchRow("Goles", "Jugador, equipo y marcador del juego", n.goals) { v -> set { it.copy(goals = v) } }
+                SwitchRow("Goles", "Equipo y marcador del juego (jugador en modo demostración)", n.goals) { v -> set { it.copy(goals = v) } }
                 SwitchRow("Fin de cada juego", "Resultado del juego y cómo va la serie", n.gameEnd) { v -> set { it.copy(gameEnd = v) } }
                 SwitchRow("Fin de serie", "Ganador y marcador final", n.seriesEnd) { v -> set { it.copy(seriesEnd = v) } }
                 SwitchRow("Solo de mis favoritos", null, n.favoritesOnly) { v -> set { it.copy(favoritesOnly = v) } }

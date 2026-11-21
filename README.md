@@ -2,7 +2,7 @@
 
 App de Android para seguir la RLCS de Rocket League: próximos torneos, series en vivo (Bo3/Bo5/Bo7), cada gol al instante en el teléfono y el reloj, widget en la pantalla de inicio y tus equipos favoritos primero. Diseño Material 3 Expressive.
 
-> **Estado:** v0.2.0 con datos de demostración (equipos ficticios y partidos simulados). Ver [CHANGELOG](CHANGELOG.md).
+> **Estado:** v0.3.0 con datos reales de Liquipedia y modo demostración. Ver [CHANGELOG](CHANGELOG.md).
 
 ## Descargar
 
@@ -39,11 +39,21 @@ app/src/main/java/com/rlcspedia/app/
   ui/screens/               En vivo, Torneos, Favoritos, Ajustes
 ```
 
-## Datos reales
+## Datos reales (Liquipedia)
 
-`DemoData` y el simulador de `LiveRepository` son de demostración. Para datos reales, sustitúyelos por un proveedor que entregue las mismas estructuras y emita los mismos `LiveEvent`.
+```
+LiquipediaDB API ──(cada 10 min, GitHub Actions + secreto)──▶ rama data/feed.json ──▶ app (cada 1 min abierta, 15 min en segundo plano)
+```
 
-Fuente sugerida: **Liquipedia LPDB API** (requiere API key y respetar sus límites). La key no debe ir en la app: un backend pequeño (p. ej. FastAPI) consulta, cachea y envía avisos con Firebase Cloud Messaging, de modo que lleguen aunque la app esté cerrada.
+1. Pide una clave de API en Liquipedia (gratis para proyectos comunitarios y de código abierto no comerciales).
+2. En GitHub: **Settings → Secrets and variables → Actions → New repository secret** → nombre `LIQUIPEDIA_API_KEY`.
+3. Ejecuta el workflow **Datos de Liquipedia** (pestaña Actions → Run workflow). Después corre solo cada 10 min.
+
+`scripts/feed.py` hace 3 consultas por ejecución (torneos, series y equipos), espera 2 s entre ellas y se identifica con un User-Agent propio. Se incluyen torneos con "RLCS" en el nombre, desde 3 días atrás hasta 60 días adelante.
+
+Limitaciones: Liquipedia no publica goleadores ni el reloj del juego, y su marcador lo actualizan editores, con algunos minutos de retraso.
+
+Datos de [Liquipedia](https://liquipedia.net/rocketleague) bajo licencia [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
 
 ## Firma
 

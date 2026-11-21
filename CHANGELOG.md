@@ -6,11 +6,25 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) · Versiona
 ## [Sin publicar]
 
 ### Pendiente
-- Proveedor de datos reales (Liquipedia LPDB vía backend propio).
-- Notificaciones push con la app cerrada (Firebase Cloud Messaging desde el backend).
+- Avisos al instante con la app cerrada (hoy cada ~15 min por límite de Android; requiere Firebase Cloud Messaging).
+- Goleador y reloj del juego con datos reales (Liquipedia no los publica; requiere otra fuente).
 - Live Updates de Android 16+ para la serie en curso.
 - Tile y app de Wear OS.
 - Logo definitivo y nombre final.
+
+## [0.3.0] - 2026-11-20
+
+### Añadido
+- **Datos reales de la RLCS desde Liquipedia** (LiquipediaDB API v3): torneos, equipos con jugadores, series con su formato, marcador de la serie y de cada juego.
+  - El workflow "Datos de Liquipedia" consulta la API cada 10 min con la clave guardada como secreto del repo y publica `feed.json` en la rama `data`. La app nunca contiene la clave.
+  - La app lee el feed cada minuto mientras está abierta y cada 15 min en segundo plano (WorkManager) para notificar inicio de serie, cambios de marcador, fin de juego y fin de serie.
+  - Atribución a Liquipedia (CC-BY-SA 3.0) en pantalla y botón para abrir cada serie en Liquipedia.
+- Ajuste **Fuente de datos**: Liquipedia o Demostración. Si el feed falla, un aviso permite cambiar a demostración.
+- Deslizar para actualizar con el indicador de carga expresivo.
+
+### Cambiado
+- Material 3 Expressive en más componentes: barra superior flexible (`MediumFlexibleTopAppBar`) con subtítulo del estado de los datos, reloj del juego como progreso ondulado (`LinearWavyProgressIndicator`) y carga inicial con `ContainedLoadingIndicator`.
+- Con datos reales, los avisos de gol indican el equipo y el marcador (la fuente no indica el jugador).
 
 ## [0.2.1] - 2026-11-20
 

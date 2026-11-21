@@ -65,6 +65,10 @@ class Notifier(private val context: Context, private val settings: SettingsStore
                         (if (e.overtime) " · Tiempo extra" else "") + " · ${formatClock(e.goal.clock)}",
                 )
             }
+            is LiveEvent.ScoreUpdate -> if (prefs.goals) {
+                val scorer = team(s.teams[e.side])
+                post(s, CH_GOALS, "Gol de ${scorer.name}", "${a.tag} ${e.scoreA} – ${e.scoreB} ${b.tag} · Juego ${e.gameNumber} · Serie ${s.wins.first}–${s.wins.second}")
+            }
             is LiveEvent.GameEnded -> if (prefs.gameEnd) {
                 val (wa, wb) = s.wins
                 val w = team(s.teams[e.game.winner])
@@ -113,7 +117,7 @@ class Notifier(private val context: Context, private val settings: SettingsStore
         } catch (_: SecurityException) { }
     }
 
-    private fun team(id: String) = LiveRepository.teamById.getValue(id)
+    private fun team(id: String) = LiveRepository.team(id)
     private fun tournamentName(s: Series) = LiveRepository.tournament(s.tournamentId)?.let { "${it.name} ${it.region}" } ?: ""
 
     companion object {

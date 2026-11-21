@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rlcspedia.app.R
 import com.rlcspedia.app.data.AppSettings
+import com.rlcspedia.app.data.FeedState
 import com.rlcspedia.app.data.LiveRepository
 import com.rlcspedia.app.data.Series
 import com.rlcspedia.app.data.SeriesStatus
@@ -57,6 +58,7 @@ private fun range(a: Long, b: Long) = SimpleDateFormat("d MMM", es).let { "${it.
 @Composable
 fun TournamentsScreen(padding: PaddingValues, onOpen: (String) -> Unit) {
     val all by LiveRepository.tournaments.collectAsStateWithLifecycle()
+    val feed by LiveRepository.feedState.collectAsStateWithLifecycle()
     val now = System.currentTimeMillis()
     val list = all.filter { it.end > now }.sortedBy { it.start }
     LazyColumn(
@@ -66,7 +68,14 @@ fun TournamentsScreen(padding: PaddingValues, onOpen: (String) -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         item { SectionTitle("Torneos") }
+        if (list.isEmpty()) item {
+            Text(
+                if (feed == FeedState.Loading) "Cargando torneos…" else "No hay torneos de la RLCS en las próximas semanas.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(24.dp),
+            )
+        }
         items(list, key = { it.id }) { TournamentCard(it, now) { onOpen(it.id) } }
+        item { Attribution(feed) }
     }
 }
 
@@ -89,8 +98,11 @@ private fun TournamentCard(t: Tournament, now: Long, onClick: () -> Unit) {
             }
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
-                Text("${t.name} · ${t.region}", style = MaterialTheme.typography.titleMedium)
-                Text("${t.tier} · ${t.teams} equipos · ${t.prize} · ${t.venue}", style = MaterialTheme.typography.bodyMedium)
+                Text(if (t.region.isBlank()) t.name else "${t.name} · ${t.region}", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    listOf(t.tier, if (t.teams > 0) "${t.teams} equipos" else "", t.prize, t.venue).filter { it.isNotBlank() }.joinToString(" · "),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
             Spacer(Modifier.width(8.dp))
             Text(if (ongoing) "En curso" else countdown(t.start), style = MaterialTheme.typography.labelLarge)
@@ -120,13 +132,13 @@ fun TournamentScreen(id: String, series: List<Series>, settings: AppSettings, pa
                 IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_back), "Volver a torneos") }
                 Column {
                     Text("${t.name} · ${t.region}", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
-                    Text("${range(t.start, t.end)} · ${t.prize} · ${t.stage}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(listOf(range(t.start, t.end), t.prize, t.stage).filter { it.isNotBlank() }.joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
         if (list.isEmpty()) item {
             Box(Modifier.padding(32.dp)) {
-                Text("Las series se publican cuando se define el bracket.", color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                Text("Las series se publican en Liquipedia cuando se define el bracket.", color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
             }
         }
         items(list, key = { it.id }) { SeriesCard(it, settings.favorites, Modifier.widthIn(max = 720.dp).animateItem()) }
