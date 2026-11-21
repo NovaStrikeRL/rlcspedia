@@ -13,8 +13,8 @@ android {
         applicationId = "com.rlcspedia.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 4
-        versionName = "0.3.0"
+        versionCode = 5
+        versionName = "0.4.0"
     }
 
     buildTypes {
@@ -52,4 +52,5 @@ dependencies {
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
     implementation(libs.work.runtime)
+    implementation(libs.graphics.shapes)
 }

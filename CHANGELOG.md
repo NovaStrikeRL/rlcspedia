@@ -12,6 +12,23 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) · Versiona
 - Tile y app de Wear OS.
 - Logo definitivo y nombre final.
 
+## [0.4.0] - 2026-11-21
+
+### Cambiado
+- **Modo demostración por defecto** mientras llega la clave de Liquipedia; se cambia en Ajustes → Datos.
+- **Íconos Material Symbols Rounded** (los de Material 3) en toda la app: versión delineada en reposo y rellena en estado activo.
+- **Material 3 Expressive completo**:
+  - Formas que se transforman (`MaterialShapes` + `Morph`): juegos ganados pasan de círculo a gema, avatares de favoritos de círculo a galleta de 9 lados, logo con forma de galleta, fecha de torneo en curso con forma "Sunny" que gira.
+  - **Estallido de gol**: una forma "Soft burst" crece, gira y se desvanece detrás del marcador en cada gol.
+  - Movimiento con resortes del `MotionScheme` expresivo: transición entre pestañas, marcador, flecha de detalles, expandir juegos y progreso del reloj.
+  - Formas de interacción: tarjetas y botones cambian de forma al presionarlos (`ButtonDefaults.shapes()`, `IconButtonDefaults.shapes()`, `toggleableShapes()`).
+  - **Barra de herramientas flotante** (`HorizontalFloatingToolbar`) con botón vibrante: filtro "Solo favoritos", actualizar e ir al inicio.
+  - **Riel de navegación ancho** (`WideNavigationRail`) en tabletas y plegables; barra corta en teléfonos.
+  - **Listas segmentadas** en Favoritos y Ajustes.
+  - **Tipografía enfatizada** (`*Emphasized`) en marcadores, equipos, chips y títulos.
+  - Interruptores con ícono en el pulgar y botones de formato en forma de píldora.
+- "Reducir movimiento" también desactiva las transformaciones de formas, resortes y estallidos.
+
 ## [0.3.0] - 2026-11-20
 
 ### Añadido

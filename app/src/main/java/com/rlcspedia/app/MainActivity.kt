@@ -8,6 +8,22 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.WideNavigationRail
+import androidx.compose.material3.WideNavigationRailItem
+import androidx.compose.material3.toShape
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.IntOffset
+import com.rlcspedia.app.ui.components.Symbols
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
@@ -52,11 +68,12 @@ import com.rlcspedia.app.ui.screens.TournamentScreen
 import com.rlcspedia.app.ui.screens.TournamentsScreen
 import com.rlcspedia.app.ui.theme.RLCSpediaTheme
 
-enum class Tab(val label: String, val icon: Int) {
-    LIVE("En vivo", R.drawable.ic_live),
-    TOURNAMENTS("Torneos", R.drawable.ic_trophy),
-    FAVORITES("Favoritos", R.drawable.ic_star),
-    SETTINGS("Ajustes", R.drawable.ic_tune),
+/** Ícono Material Symbols: delineado en reposo, relleno cuando la pestaña está activa. */
+enum class Tab(val label: String, val icons: Pair<Int, Int>) {
+    LIVE("En vivo", Symbols.live),
+    TOURNAMENTS("Torneos", Symbols.trophy),
+    FAVORITES("Favoritos", Symbols.star),
+    SETTINGS("Ajustes", Symbols.settings),
 }
 
 class MainActivity : ComponentActivity() {
@@ -82,6 +99,7 @@ private fun App() {
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val feed by LiveRepository.feedState.collectAsStateWithLifecycle()
     val liveCount = series.count { it.status == SeriesStatus.LIVE }
+    val reduceMotion = settings.reduceMotion
 
     BackHandler(enabled = openTournament != null) { openTournament = null }
 
@@ -101,49 +119,79 @@ private fun App() {
         }
     }
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
-        topBar = {
-            MediumFlexibleTopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painterResource(R.drawable.ic_logo), contentDescription = null,
-                            modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)),
+    val wide = LocalConfiguration.current.screenWidthDp >= 600
+    val select: (Tab) -> Unit = { t -> tab = t; if (t != Tab.TOURNAMENTS) openTournament = null }
+
+    @Composable
+    fun TabIcon(t: Tab) {
+        val icon = @Composable { Icon(painterResource(if (tab == t) t.icons.second else t.icons.first), null) }
+        if (t == Tab.LIVE && liveCount > 0) BadgedBox(badge = { Badge { Text("$liveCount") } }) { icon() } else icon()
+    }
+
+    Row(Modifier.fillMaxSize()) {
+        // Pantallas anchas (tabletas, plegables abiertos): riel de navegación ancho
+        if (wide) WideNavigationRail(modifier = Modifier.fillMaxHeight()) {
+            Tab.entries.forEach { t ->
+                WideNavigationRailItem(
+                    selected = tab == t, onClick = { select(t) }, railExpanded = false,
+                    icon = { TabIcon(t) }, label = { Text(t.label) },
+                )
+            }
+        }
+        Scaffold(
+            modifier = Modifier.weight(1f).nestedScroll(scroll.nestedScrollConnection),
+            topBar = {
+                MediumFlexibleTopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Image(
+                                painterResource(R.drawable.ic_logo), contentDescription = null,
+                                modifier = Modifier.size(36.dp).clip(MaterialShapes.Cookie9Sided.toShape()),
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text("RLCSpedia")
+                        }
+                    },
+                    subtitle = { Text(feedSubtitle(feed)) },
+                    scrollBehavior = scroll,
+                )
+            },
+            bottomBar = {
+                if (!wide) ShortNavigationBar {
+                    Tab.entries.forEach { t ->
+                        ShortNavigationBarItem(
+                            selected = tab == t, onClick = { select(t) },
+                            icon = { TabIcon(t) }, label = { Text(t.label) },
                         )
-                        Spacer(Modifier.width(12.dp))
-                        Text("RLCSpedia")
+                    }
+                }
+            },
+            snackbarHost = { SnackbarHost(snackbar) },
+        ) { padding ->
+            // Transición expresiva entre pestañas (resorte del esquema de movimiento)
+            val spatial = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
+            val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+            AnimatedContent(
+                targetState = tab to openTournament,
+                transitionSpec = {
+                    if (reduceMotion) fadeIn(snap()) togetherWith fadeOut(snap())
+                    else {
+                        val dir = if (targetState.first.ordinal >= initialState.first.ordinal) 1 else -1
+                        (slideInHorizontally(spatial) { it / 6 * dir } + fadeIn(effects)) togetherWith
+                            (slideOutHorizontally(spatial) { -it / 6 * dir } + fadeOut(effects))
                     }
                 },
-                subtitle = { Text(feedSubtitle(feed)) },
-                scrollBehavior = scroll,
-            )
-        },
-        bottomBar = {
-            ShortNavigationBar {
-                Tab.entries.forEach { t ->
-                    ShortNavigationBarItem(
-                        selected = tab == t,
-                        onClick = { tab = t; if (t != Tab.TOURNAMENTS) openTournament = null },
-                        icon = {
-                            if (t == Tab.LIVE && liveCount > 0) {
-                                BadgedBox(badge = { Badge { Text("$liveCount") } }) { Icon(painterResource(t.icon), null) }
-                            } else Icon(painterResource(t.icon), null)
-                        },
-                        label = { Text(t.label) },
-                    )
+                label = "tabs",
+            ) { (current, opened) ->
+                when (current) {
+                    Tab.LIVE -> LiveScreen(series, settings, feed, padding)
+                    Tab.TOURNAMENTS -> opened?.let { id ->
+                        TournamentScreen(id, series, settings, padding, onBack = { openTournament = null })
+                    } ?: TournamentsScreen(padding, onOpen = { openTournament = it })
+                    Tab.FAVORITES -> TeamsScreen(settings, padding, onToggle = store::toggleFavorite)
+                    Tab.SETTINGS -> SettingsScreen(settings, padding, onChange = store::update)
                 }
             }
-        },
-        snackbarHost = { SnackbarHost(snackbar) },
-    ) { padding ->
-        when (tab) {
-            Tab.LIVE -> LiveScreen(series, settings, feed, padding)
-            Tab.TOURNAMENTS -> openTournament?.let { id ->
-                TournamentScreen(id, series, settings, padding, onBack = { openTournament = null })
-            } ?: TournamentsScreen(padding, onOpen = { openTournament = it })
-            Tab.FAVORITES -> TeamsScreen(settings, padding, onToggle = store::toggleFavorite)
-            Tab.SETTINGS -> SettingsScreen(settings, padding, onChange = store::update)
         }
     }
 }

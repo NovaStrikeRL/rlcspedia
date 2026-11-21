@@ -109,6 +109,22 @@ private fun typography(legible: Boolean): Typography {
         labelLarge = base.labelLarge.b().copy(fontWeight = FontWeight.Bold),
         labelMedium = base.labelMedium.b().copy(fontWeight = FontWeight.Bold),
         labelSmall = base.labelSmall.b().copy(fontWeight = FontWeight.Bold),
+        // Escala enfatizada de M3 Expressive: marcadores, títulos y acciones destacadas
+        displayLargeEmphasized = base.displayLargeEmphasized.d(),
+        displayMediumEmphasized = base.displayMediumEmphasized.d(),
+        displaySmallEmphasized = base.displaySmallEmphasized.d(),
+        headlineLargeEmphasized = base.headlineLargeEmphasized.d(),
+        headlineMediumEmphasized = base.headlineMediumEmphasized.d(),
+        headlineSmallEmphasized = base.headlineSmallEmphasized.d(),
+        titleLargeEmphasized = base.titleLargeEmphasized.b().copy(fontWeight = FontWeight.Bold),
+        titleMediumEmphasized = base.titleMediumEmphasized.b().copy(fontWeight = FontWeight.Bold),
+        titleSmallEmphasized = base.titleSmallEmphasized.b().copy(fontWeight = FontWeight.Bold),
+        bodyLargeEmphasized = base.bodyLargeEmphasized.b().copy(fontWeight = FontWeight.Bold),
+        bodyMediumEmphasized = base.bodyMediumEmphasized.b().copy(fontWeight = FontWeight.Bold),
+        bodySmallEmphasized = base.bodySmallEmphasized.b().copy(fontWeight = FontWeight.Bold),
+        labelLargeEmphasized = base.labelLargeEmphasized.b().copy(fontWeight = FontWeight.Bold),
+        labelMediumEmphasized = base.labelMediumEmphasized.b().copy(fontWeight = FontWeight.Bold),
+        labelSmallEmphasized = base.labelSmallEmphasized.b().copy(fontWeight = FontWeight.Bold),
     )
 }
 

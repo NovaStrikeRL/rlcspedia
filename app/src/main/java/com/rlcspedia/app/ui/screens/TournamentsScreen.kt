@@ -2,6 +2,19 @@
 
 package com.rlcspedia.app.ui.screens
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.runtime.remember
+import com.rlcspedia.app.ui.components.MorphShape
+import com.rlcspedia.app.ui.components.Symbols
+import com.rlcspedia.app.ui.components.pressShape
+import com.rlcspedia.app.ui.components.rememberMorph
+import com.rlcspedia.app.ui.theme.LocalReduceMotion
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,7 +51,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.rlcspedia.app.R
 import com.rlcspedia.app.data.AppSettings
 import com.rlcspedia.app.data.FeedState
 import com.rlcspedia.app.data.LiveRepository
@@ -85,20 +97,25 @@ private fun TournamentCard(t: Tournament, now: Long, onClick: () -> Unit) {
     val body: @Composable () -> Unit = {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             // Bloque de fecha con forma expresiva (cookie para en curso, cuadrado suave para próximos)
+            // En curso: "Sunny" que gira lento; próximos: "Cookie de 4 lados" estática
+            val spin = if (ongoing && !LocalReduceMotion.current) {
+                val tr = rememberInfiniteTransition(label = "spin")
+                tr.animateFloat(0f, 360f, infiniteRepeatable(tween(24_000, easing = LinearEasing)), label = "deg").value
+            } else 0f
             Surface(
-                shape = (if (ongoing) MaterialShapes.Cookie9Sided else MaterialShapes.Square).toShape(),
+                shape = MorphShape(rememberMorph(MaterialShapes.Cookie4Sided, MaterialShapes.Sunny), if (ongoing) 1f else 0f, spin),
                 color = if (ongoing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = if (ongoing) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(64.dp),
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    Text(day(t.start), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+                    Text(day(t.start), style = MaterialTheme.typography.headlineSmallEmphasized, textAlign = TextAlign.Center)
                     Text(month(t.start), style = MaterialTheme.typography.labelMedium)
                 }
             }
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
-                Text(if (t.region.isBlank()) t.name else "${t.name} · ${t.region}", style = MaterialTheme.typography.titleMedium)
+                Text(if (t.region.isBlank()) t.name else "${t.name} · ${t.region}", style = MaterialTheme.typography.titleMediumEmphasized)
                 Text(
                     listOf(t.tier, if (t.teams > 0) "${t.teams} equipos" else "", t.prize, t.venue).filter { it.isNotBlank() }.joinToString(" · "),
                     style = MaterialTheme.typography.bodyMedium,
@@ -109,10 +126,12 @@ private fun TournamentCard(t: Tournament, now: Long, onClick: () -> Unit) {
         }
     }
     val mod = Modifier.widthIn(max = 720.dp).fillMaxWidth()
-    if (ongoing) Card(onClick, mod, shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(
+    val interaction = remember { MutableInteractionSource() }
+    val shape = pressShape(interaction, rest = if (ongoing) 32.dp else 24.dp, pressed = 14.dp)
+    if (ongoing) Card(onClick, mod, shape = shape, interactionSource = interaction, colors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
     )) { body() }
-    else OutlinedCard(onClick, mod, shape = MaterialTheme.shapes.large) { body() }
+    else OutlinedCard(onClick, mod, shape = shape, interactionSource = interaction) { body() }
 }
 
 @Composable
@@ -129,7 +148,7 @@ fun TournamentScreen(id: String, series: List<Series>, settings: AppSettings, pa
     ) {
         item {
             Row(Modifier.widthIn(max = 720.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_back), "Volver a torneos") }
+                IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) { Icon(painterResource(Symbols.back), "Volver a torneos") }
                 Column {
                     Text("${t.name} · ${t.region}", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
                     Text(listOf(range(t.start, t.end), t.prize, t.stage).filter { it.isNotBlank() }.joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

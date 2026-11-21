@@ -2,7 +2,7 @@
 
 App de Android para seguir la RLCS de Rocket League: próximos torneos, series en vivo (Bo3/Bo5/Bo7), cada gol al instante en el teléfono y el reloj, widget en la pantalla de inicio y tus equipos favoritos primero. Diseño Material 3 Expressive.
 
-> **Estado:** v0.3.0 con datos reales de Liquipedia y modo demostración. Ver [CHANGELOG](CHANGELOG.md).
+> **Estado:** v0.4.0 · modo demostración por defecto; datos reales de Liquipedia al configurar la clave. Ver [CHANGELOG](CHANGELOG.md).
 
 ## Descargar
 
@@ -58,6 +58,10 @@ Datos de [Liquipedia](https://liquipedia.net/rocketleague) bajo licencia [CC-BY-
 ## Firma
 
 El APK de release se firma con la llave de depuración para poder instalarlo directo. Para Google Play, crea una llave propia y configúrala con secretos de GitHub.
+
+## Créditos
+
+Íconos: [Material Symbols](https://fonts.google.com/icons) (Apache 2.0). Fuentes: Chakra Petch y Atkinson Hyperlegible (OFL).
 
 ## Logo
 

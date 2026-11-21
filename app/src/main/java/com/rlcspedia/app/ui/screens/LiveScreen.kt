@@ -5,6 +5,20 @@ package com.rlcspedia.app.ui.screens
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.HorizontalFloatingToolbar
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.unit.Dp
+import com.rlcspedia.app.ui.components.Symbols
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -43,7 +57,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.rlcspedia.app.R
 import com.rlcspedia.app.RLCSpediaApp
 import com.rlcspedia.app.data.AppSettings
 import com.rlcspedia.app.data.DataSource
@@ -60,29 +73,64 @@ fun List<Series>.prioritized(favs: Set<String>) =
 
 @Composable
 fun LiveScreen(series: List<Series>, settings: AppSettings, feed: FeedState, padding: PaddingValues) {
+    var onlyFavs by rememberSaveable { mutableStateOf(false) }
     val favs = settings.favorites
     val now = System.currentTimeMillis()
-    val live = series.filter { it.status == SeriesStatus.LIVE }.prioritized(favs)
+    val shown = if (onlyFavs) series.filter { s -> s.teams.any { it in favs } } else series
+    val live = shown.filter { it.status == SeriesStatus.LIVE }.prioritized(favs)
     val soonWindow = if (feed == FeedState.Demo) 6 * 3_600_000L else 48 * 3_600_000L
-    val soon = series.filter { it.status == SeriesStatus.UPCOMING && it.start - now < soonWindow }.prioritized(favs)
-    val done = series.filter { it.status == SeriesStatus.DONE }.sortedByDescending { it.start }.take(12).prioritized(favs)
+    val soon = shown.filter { it.status == SeriesStatus.UPCOMING && it.start - now < soonWindow }.prioritized(favs)
+    val done = shown.filter { it.status == SeriesStatus.DONE }.sortedByDescending { it.start }.take(12).prioritized(favs)
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
 
-    RefreshableList(padding, feed) {
-        item { FeedBanner(feed) }
-        if (feed == FeedState.Loading && series.isEmpty()) {
-            item { Box(Modifier.padding(48.dp)) { ContainedLoadingIndicator(Modifier.size(64.dp)) } }
-            return@RefreshableList
+    Box(Modifier.fillMaxSize()) {
+        RefreshableList(padding, feed, listState, extraBottom = 88.dp) {
+            item { FeedBanner(feed) }
+            if (feed == FeedState.Loading && series.isEmpty()) {
+                item { Box(Modifier.padding(48.dp)) { ContainedLoadingIndicator(Modifier.size(64.dp)) } }
+                return@RefreshableList
+            }
+            if (onlyFavs && favs.isEmpty()) item {
+                Text("Aún no tienes favoritos. Agrégalos en la pestaña Favoritos.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp))
+            }
+            section("En vivo", live, favs, empty = if (onlyFavs) "Ningún favorito está jugando ahora." else "No hay series en vivo ahora mismo.")
+            if (soon.isNotEmpty()) section("Próximas series", soon, favs)
+            if (done.isNotEmpty()) section("Terminadas", done, favs)
+            item { Attribution(feed) }
         }
-        section("En vivo", live, favs, empty = "No hay series en vivo ahora mismo.")
-        if (soon.isNotEmpty()) section("Próximas series", soon, favs)
-        if (done.isNotEmpty()) section("Terminadas", done, favs)
-        item { Attribution(feed) }
+
+        // Barra de herramientas flotante (M3 Expressive) con botón de acción vibrante
+        HorizontalFloatingToolbar(
+            expanded = true,
+            floatingActionButton = {
+                FloatingToolbarDefaults.VibrantFloatingActionButton(onClick = { scope.launch { listState.animateScrollToItem(0) } }) {
+                    Icon(painterResource(Symbols.expand), "Ir al inicio", Modifier.rotate(180f))
+                }
+            },
+            colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = padding.calculateBottomPadding() + 16.dp),
+        ) {
+            IconToggleButton(
+                checked = onlyFavs, onCheckedChange = { onlyFavs = it },
+                shapes = IconButtonDefaults.toggleableShapes(),
+            ) {
+                Icon(painterResource(if (onlyFavs) Symbols.star.second else Symbols.star.first), if (onlyFavs) "Mostrar todas las series" else "Solo favoritos")
+            }
+            if (feed != FeedState.Demo) IconButton(onClick = { scope.launch { LiveRepository.refresh() } }, shapes = IconButtonDefaults.shapes()) {
+                Icon(painterResource(Symbols.refresh), "Actualizar")
+            }
+        }
     }
 }
 
 /** Lista con "desliza para actualizar" e indicador expresivo. Solo actualiza con Liquipedia. */
 @Composable
-fun RefreshableList(padding: PaddingValues, feed: FeedState, content: LazyListScope.() -> Unit) {
+fun RefreshableList(
+    padding: PaddingValues, feed: FeedState,
+    listState: LazyListState = rememberLazyListState(), extraBottom: Dp = 0.dp,
+    content: LazyListScope.() -> Unit,
+) {
     val scope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }
     val state = rememberPullToRefreshState()
@@ -99,8 +147,9 @@ fun RefreshableList(padding: PaddingValues, feed: FeedState, content: LazyListSc
         },
     ) {
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = padding.calculateBottomPadding() + 24.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = padding.calculateBottomPadding() + 24.dp + extraBottom),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             content = content,
@@ -124,10 +173,10 @@ private fun FeedBanner(feed: FeedState) {
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(painterResource(R.drawable.ic_bell), null)
+                Icon(painterResource(if (feed is FeedState.Error) Symbols.info else Symbols.database), null)
                 Text(text, style = MaterialTheme.typography.bodyMedium)
             }
-            FilledTonalButton(onClick = action.second, modifier = Modifier.align(Alignment.End)) { Text(action.first) }
+            FilledTonalButton(onClick = action.second, shapes = ButtonDefaults.shapes(), modifier = Modifier.align(Alignment.End)) { Text(action.first) }
         }
     }
 }
@@ -144,7 +193,9 @@ fun Attribution(feed: FeedState) {
         )
         TextButton(onClick = {
             ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://liquipedia.net/rocketleague/Main_Page")))
-        }) { Text("Abrir Liquipedia") }
+        }, shapes = ButtonDefaults.shapes()) {
+            Icon(painterResource(Symbols.openInNew), null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Abrir Liquipedia")
+        }
     }
 }
 
