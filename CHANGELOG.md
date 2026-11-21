@@ -28,7 +28,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) · Versiona
 - **Accesibilidad**: tema Sistema/Claro/Oscuro, contraste alto, color dinámico (Material You) opcional, tamaño de texto 85–150 % sobre el del sistema, fuente Atkinson Hyperlegible en todo, reducir movimiento, anuncios de goles para TalkBack, descripciones completas de marcadores y objetivos táctiles de 48 dp.
 - Ícono adaptativo con versión monocromática para íconos temáticos.
 - Fuentes incluidas: Chakra Petch (marcadores) y Atkinson Hyperlegible (texto), ambas con licencia OFL.
-- GitHub Actions: compila el APK en cada push y lo publica en Releases al crear un tag `v*`.
+- GitHub Actions: compila el APK en cada push a `main` y crea la Release `vX.Y.Z` automáticamente cuando cambia `versionName`.
 
 ### Eliminado
 - PWA (HTML/CSS/JS, Service Worker y widget de Windows).

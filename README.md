@@ -10,11 +10,7 @@ El APK está en **Releases**. En el teléfono permite "Instalar apps de origen d
 
 ## Compilar
 
-**GitHub Actions** compila en cada push (el APK queda como artefacto del workflow) y publica una Release al subir un tag:
-
-```bash
-git tag v0.2.0 && git push origin v0.2.0
-```
+**GitHub Actions** compila en cada push a `main`. Si `versionName` en `app/build.gradle.kts` es nuevo, crea la Release `vX.Y.Z` con el APK y las notas de esa versión del CHANGELOG. Para publicar una versión: sube `versionCode`/`versionName`, agrega su sección al CHANGELOG y haz push.
 
 **Local** (JDK 17+, Android SDK, Gradle 9.6):
 

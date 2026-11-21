@@ -44,15 +44,16 @@ jobs:
           name: RLCSpedia-apk
           path: RLCSpedia-*.apk
 
-      - name: Notas de la versión desde CHANGELOG
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Publicar Release (si la versión es nueva)
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          v="${GITHUB_REF_NAME#v}"
+          v=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          if gh release view "v$v" > /dev/null 2>&1; then
+            echo "La Release v$v ya existe; solo se sube el artefacto."
+            exit 0
+          fi
           awk -v v="$v" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
-
-      - name: Publicar Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: RLCSpedia-*.apk
-          body_path: notes.md
+          cp RLCSpedia-*.apk "RLCSpedia-v$v.apk"
+          gh release create "v$v" "RLCSpedia-v$v.apk" --target "$GITHUB_SHA" --title "RLCSpedia v$v" --notes-file notes.md
