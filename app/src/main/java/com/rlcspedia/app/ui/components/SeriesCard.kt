@@ -69,6 +69,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.rlcspedia.app.data.GAME_LENGTH
 import com.rlcspedia.app.data.LiveRepository
@@ -305,14 +306,15 @@ private fun Pips(total: Int, on: Int, color: Color) {
 @Composable
 private fun Score(score: String, color: Color, burstKey: String?) {
     val reduce = LocalReduceMotion.current
+    val spatial = MaterialTheme.motionScheme.fastSpatialSpec<IntOffset>()
     Box(Modifier.widthIn(min = 52.dp).clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
         if (burstKey != null) GoalBurst(trigger = burstKey, color = color)
         if (reduce) ScoreText(score, color)
         else AnimatedContent(
             targetState = score,
             transitionSpec = {
-                (slideInVertically(MaterialTheme.motionScheme.fastSpatialSpec()) { it } + fadeIn()) togetherWith
-                    (slideOutVertically(MaterialTheme.motionScheme.fastSpatialSpec()) { -it } + fadeOut())
+                (slideInVertically(spatial) { it } + fadeIn()) togetherWith
+                    (slideOutVertically(spatial) { -it } + fadeOut())
             },
             label = "score",
         ) { ScoreText(it, color) }
